@@ -1,0 +1,3 @@
+= Example project for use cases of jQAssistant
+
+This is a synthetic Java and Maven project to demonstrate some applications of jQAssistant.
