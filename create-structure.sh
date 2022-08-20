@@ -1,0 +1,23 @@
+mkdir -p src/main/java/corp/fantastic/project/adapters/common/model/exceptions
+mkdir -p src/main/java/corp/fantastic/project/adapters/upstreamadapter
+mkdir -p src/main/java/corp/fantastic/project/adapters/upstreamadapter/controllers
+mkdir -p src/main/java/corp/fantastic/project/adapters/upstreamadapter/controllers/input
+mkdir -p src/main/java/corp/fantastic/project/adapters/upstreamadapter/controllers/input/model/exception
+mkdir -p src/main/java/corp/fantastic/project/adapters/upstreamadapter/controllers/output
+mkdir -p src/main/java/corp/fantastic/project/adapters/upstreamadapter/controllers/output/model/exceptions
+mkdir -p src/main/java/adapters/uiadapter/controllers/input/model/exception
+mkdir -p src/main/java/corp/fantastic/project/adapters/uiadapter/controllers/output/model/exception
+mkdir -p src/main/java/corp/fantastic/project/application/common/dtos
+mkdir -p src/main/java/corp/fantastic/project/application/common/model/exceptions
+mkdir -p src/main/java/corp/fantastic/project/application/computationservice/adapter/dtos
+mkdir -p src/main/java/corp/fantastic/project/application/computationservice/model/exception
+mkdir -p src/main/java/corp/fantastic/project/application/storageservice/adapter/dtos
+mkdir -p src/main/java/corp/fantastic/project/application/storageservice/entities
+mkdir -p src/main/java/corp/fantastic/project/application/storageservice/model/exception
+mkdir -p src/main/java/corp/fantastic/project/configurations/
+mkdir -p src/main/java/corp/fantastic/project/domains/common/model/exceptions
+mkdir -p src/main/java/corp/fantastic/project/domains/computation/applicationinterface
+mkdir -p src/main/java/corp/fantastic/project/domains/computation/model/exceptions
+mkdir -p src/main/java/corp/fantastic/project/domains/validation/applicationinterface
+mkdir -p src/main/java/corp/fantastic/project/domains/validation/model/exceptions
+

@@ -1,0 +1,1 @@
+package corp.fantastic.project.domains.customer.model;

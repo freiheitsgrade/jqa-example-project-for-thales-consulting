@@ -1,0 +1,96 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.3</version>
+    </parent>
+
+    <groupId>corp.fantastic.project</groupId>
+    <artifactId>parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+
+    <properties>
+        <jqassistant-plugin.version>1.12.0</jqassistant-plugin.version>
+        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+        <maven-jar-plugin.version>3.1.2</maven-jar-plugin.version>
+
+        <java.version>11</java.version>
+
+    </properties>
+
+    <build>
+        <defaultGoal>clean install</defaultGoal>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.buschmais.jqassistant</groupId>
+                    <artifactId>jqassistant-maven-plugin</artifactId>
+                    <version>${jqassistant-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <parameters>true</parameters>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <parameters>true</parameters>
+                    <compilerArgs>
+                        <arg>-Xpkginfo:always</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+
+            <plugin>
+                <groupId>com.buschmais.jqassistant</groupId>
+                <artifactId>jqassistant-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>scan</goal>
+                            <goal>analyze</goal>
+                        </goals>
+                        <configuration>
+                            <failOnSeverity>MAJOR</failOnSeverity>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>corp.fantastic.jqa</groupId>
+                        <artifactId>report</artifactId>
+                        <version>0.1.0-SNAPSHOT</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

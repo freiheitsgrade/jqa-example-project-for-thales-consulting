@@ -1,0 +1,103 @@
+:toc:
+= Architecture Linting Report
+
+[[default]]
+[role=group,includesGroups=,includesGroups="structure:Default"]
+
+
+== Default Rules
+
+This section describes that default rules that are executed during each build.
+
+- <<structure:Default>>
+
+[[structure:Default]]
+[role=group,includesConcepts="arch:markAdapterLayer,arch:markServiceLayer,arch:markDomainLayer",includesConstraints="arch:detectIllegalDependencies"]
+== Structure
+
+[[arch:markAdapterLayer]]
+[source,cypher,role=concept]
+.Label the layer for the adapters with the label `Adapter`, `ToplevelLayer` and `HexArch`
+----
+MATCH (package:Java:Package)
+WHERE package.fqn =~ 'corp\\.fantastic\\.[a-z][a-z0-9]*\\.adapters'
+SET package:Adapters:HexArch:ToplevelLayer
+RETURN package
+----
+
+[[arch:markServiceLayer]]
+[source,cypher,role=concept]
+.Label  the layer for the services with the label `Services`, `ToplevelLayer` and `HexArch`
+----
+MATCH (package:Java:Package)
+WHERE package.fqn =~ 'corp\\.fantastic\\.[a-z][a-z0-9]*\\.services'
+SET package:Services:HexArch:ToplevelLayer
+RETURN package
+----
+
+[[arch:markDomainLayer]]
+[source,cypher,role=concept]
+.Label the layer for the adapters with the label `Domain`, `ToplevelLayer` and `HexArch`
+----
+MATCH (package:Java:Package)
+WHERE package.fqn =~ 'corp\\.fantastic\\.[a-z][a-z0-9]*\\.domains'
+SET package:Domains:HexArch:ToplevelLayer
+RETURN package
+----
+
+[[arch:markAllowedDependencies]]
+[source,cypher,role=concept,requiresConcepts="arch:markDomainLayer,arch:markAdapterLayer,arch:markServiceLayer"]
+.Label the allowed relationships between the layers
+----
+MATCH
+  (adapterLayer:HexArch:Adapters),
+  (domainLayer:HexArch:Domains),
+  (serviceLayer:HexArch:Services)
+MERGE
+  (adapterLayer)-[:IS_ALLOWED_TO_USE]->(serviceLayer)
+MERGE
+  (serviceLayer)-[:IS_ALLOWED_TO_USE]->(domainLayer)
+MERGE
+  (domainLayer)-[:IS_ALLOWED_TO_USE]->(adapterLayer)
+RETURN
+  count(*) as Count
+----
+
+[[arch:markExistingRelations]]
+[source,cypher,role=concept,requiresConcepts="arch:markDomainLayer,arch:markAdapterLayer,arch:markServiceLayer"]
+.Label the real existing usage relationships
+----
+MATCH
+  (l1:HexArch:ToplevelLayer)-[:CONTAINS*]->(t1:Type),
+  (l2:HexArch:ToplevelLayer)-[:CONTAINS*]->(t2:Type),
+  (t1)-[:DEPENDS_ON]->(t2)
+WHERE
+  l1 <> l2
+WITH
+  l1, l2, count(*) as weight
+MERGE
+  (l1)-[d:DEPENDS_ON_LAYER]->(l2)
+SET
+  d.weight = weight
+RETURN
+  l1 as Component, l2 as ComponentDependency, d as Dependency
+----
+
+[[arch:detectIllegalDependencies]]
+[source,cypher,role=constraint,requiresConcepts="arch:markAllowedDependencies,arch:markExistingRelations"]
+.Find all not allowed dependencies between the layers of the hexagonal architecture
+----
+MATCH
+  (l1:ToplevelLayer)-[:DEPENDS_ON_LAYER]->(l2:ToplevelLayer)
+WHERE NOT
+  (l1:ToplevelLayer)-[:IS_ALLOWED_TO_USE]->(l2:ToplevelLayer)
+WITH
+  l1, l2
+MATCH
+  (l1)-[:CONTAINS*]->(t1:Type),
+  (l2)-[:CONTAINS*]->(t2:Type),
+  (t1)-[:DEPENDS_ON]->(t2)
+RETURN
+  l1 as ToplevelLayer, t1 as Type, l2 as InvalidLayerDependency, collect(t2) as InvalidTypeDependencies
+----
+

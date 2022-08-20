@@ -1,0 +1,1 @@
+package corp.fantastic.project.adapters.uiadapter.controllers.input.model.exception;
