@@ -1,3 +1,22 @@
 = Example project for use cases of jQAssistant
 
 This is a synthetic Java and Maven project to demonstrate some applications of jQAssistant.
+
+== Structure of the example project
+
+The project contains the following Maven projects:
+
+1. `report` in the directory `report` contains the rules plugin for jQAssistant.
+2. `example-project` is a Maven Java project which uses the rules plugin to detect violations of the hexagonal architecture.
+
+== How to run the example
+
+The example below shows how to build the example project and to generate the report.
+
+[source,shell]
+----
+$ cd jqa-example-project-for-thales-consulting/example-project
+$ mvn -f ../report && mvn
+----
+
+The generated report can be found in the directory `target/jqassistant/report/asciidoc/`.
