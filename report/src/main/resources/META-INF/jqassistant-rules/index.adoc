@@ -12,18 +12,29 @@ This section describes that default rules that are executed during each build.
 - <<structure:Default>>
 
 [[structure:Default]]
-[role=group,includesConcepts="arch:markAdapterLayer,arch:markServiceLayer,arch:markDomainLayer",includesConstraints="arch:detectIllegalDependencies"]
+[role=group,includesConcepts="arch:markAdapterLayer,arch:markServiceLayer,arch:markDomainLayer,arch:markDomains,arch:markServices,arch:markAdapters",includesConstraints="arch:detectIllegalLayerDependencies,arch:detectIllegalDomainDependencies,arch:detectIllegalAdapterDependencies"]
 == Structure
 
 [[arch:markAdapterLayer]]
 [source,cypher,role=concept]
-.Label the layer for the adapters with the label `Adapter`, `ToplevelLayer` and `HexArch`
+.Label the layer for the adapters with the label `Adapters`, `ToplevelLayer` and `HexArch`
 ----
 MATCH (package:Java:Package)
 WHERE package.fqn =~ 'corp\\.fantastic\\.[a-z][a-z0-9]*\\.adapters'
 SET package:Adapters:HexArch:ToplevelLayer
 RETURN package
 ----
+
+[[arch:markAdapters]]
+[source,cypher,role=concept,requiresConcepts="arch:markAdapterLayer"]
+.Labels each single adapter with the label `Adapter` and `HexArch`
+----
+MATCH (adapterLayer:Adapters:HexArch)-[:CONTAINS]->(adapter:Package:Java)
+WHERE adapter.name <> "common"
+SET adapter:HexArch:Adapter
+return adapter
+----
+
 
 [[arch:markServiceLayer]]
 [source,cypher,role=concept]
@@ -35,15 +46,36 @@ SET package:Services:HexArch:ToplevelLayer
 RETURN package
 ----
 
+[[arch:markServices]]
+[source,cypher,role=concept,requiresConcepts="arch:markServiceLayer"]
+.Labels each single service with the label `Service` and `HexArch`
+----
+MATCH (serviceLayer:Services:HexArch)-[:CONTAINS]->(service:Package:Java)
+WHERE service.name <> "common"
+SET service:HexArch:Service
+return service
+----
+
 [[arch:markDomainLayer]]
 [source,cypher,role=concept]
-.Label the layer for the adapters with the label `Domain`, `ToplevelLayer` and `HexArch`
+.Label the layer for the adapters with the label `Domains`, `ToplevelLayer` and `HexArch`
 ----
 MATCH (package:Java:Package)
 WHERE package.fqn =~ 'corp\\.fantastic\\.[a-z][a-z0-9]*\\.domains'
 SET package:Domains:HexArch:ToplevelLayer
 RETURN package
 ----
+
+[[arch:markDomains]]
+[source,cypher,role=concept,requiresConcepts="arch:markDomainLayer"]
+.Labels each single domain with the label `Domain` and `HexArch`
+----
+MATCH (domainLayer:Domains:HexArch)-[:CONTAINS]->(domain:Package:Java)
+WHERE domain.name <> "common"
+SET domain:HexArch:Domain
+return domain
+----
+
 
 [[arch:markAllowedDependencies]]
 [source,cypher,role=concept,requiresConcepts="arch:markDomainLayer,arch:markAdapterLayer,arch:markServiceLayer"]
@@ -72,7 +104,7 @@ MATCH
   (l2:HexArch:ToplevelLayer)-[:CONTAINS*]->(t2:Type),
   (t1)-[:DEPENDS_ON]->(t2)
 WHERE
-  l1 <> l2
+  l1 <> l2 AND t1 <> t2
 WITH
   l1, l2, count(*) as weight
 MERGE
@@ -80,10 +112,10 @@ MERGE
 SET
   d.weight = weight
 RETURN
-  l1 as Component, l2 as ComponentDependency, d as Dependency
+  l1 as Layer, l2 as LayerDependency, d as DependencyWeight
 ----
 
-[[arch:detectIllegalDependencies]]
+[[arch:detectIllegalLayerDependencies]]
 [source,cypher,role=constraint,requiresConcepts="arch:markAllowedDependencies,arch:markExistingRelations"]
 .Find all not allowed dependencies between the layers of the hexagonal architecture
 ----
@@ -98,6 +130,50 @@ MATCH
   (l2)-[:CONTAINS*]->(t2:Type),
   (t1)-[:DEPENDS_ON]->(t2)
 RETURN
-  l1 as ToplevelLayer, t1 as Type, l2 as InvalidLayerDependency, collect(t2) as InvalidTypeDependencies
+  l1 as Layer, t1 as Type, l2 as InvalidLayerDependency, collect(t2) as InvalidTypeDependencies
 ----
+
+[[arch:detectIllegalDomainDependencies]]
+[source,cypher,role=constraint,requiresConcepts="arch:markDomains"]
+.Find all not allowed dependencies between the domains of the hexagonal architecture
+----
+MATCH
+    (d1:HexArch:Domain)-[:CONTAINS*]->(t1:Type),
+    (d2:HexArch:Domain)-[:CONTAINS*]->(t2:Type),
+    (t1)-[:DEPENDS_ON]->(t2)
+WHERE
+    d1 <> d2
+WITH
+    d1, d2, (count(*) - 2) AS weight, collect(distinct t2) AS violations
+MERGE
+    (d1)-[d:DEPENDS_ON]->(d2)
+SET
+    d.weight = weight
+RETURN
+    d1 AS Domain, d2 AS DomainDependeny, weight AS DependencyWeight,
+    violations AS InvalidTypeDependencies
+----
+
+
+[[arch:detectIllegalAdapterDependencies]]
+[source,cypher,role=constraint,requiresConcepts="arch:markAdapters"]
+.Find all not allowed dependencies between the adapters of the hexagonal architecture
+----
+MATCH
+    (d1:HexArch:Adapter)-[:CONTAINS*]->(t1:Type),
+    (d2:HexArch:Adapter)-[:CONTAINS*]->(t2:Type),
+    (t1)-[:DEPENDS_ON]->(t2)
+WHERE
+    d1 <> d2
+WITH
+    d1, d2, (count(*) - 2) AS weight, collect(distinct t2) AS violations
+MERGE
+    (d1)-[d:DEPENDS_ON]->(d2)
+SET
+    d.weight = weight
+RETURN
+    d1 AS Adapter, d2 AS AdapterDependeny, weight AS DependencyWeight,
+    violations AS InvalidTypeDependencies
+----
+
 

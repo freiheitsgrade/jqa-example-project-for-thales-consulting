@@ -1,0 +1,16 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>corp.fantastic.jqa</groupId>
+    <artifactId>report</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+
+    <build>
+        <defaultGoal>clean install</defaultGoal>
+
+    </build>
+
+    <dependencies>
+    </dependencies>
+
+</project>
