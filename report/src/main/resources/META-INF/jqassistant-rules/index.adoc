@@ -15,54 +15,66 @@ This section describes that default rules that are executed during each build.
 [role=group,includesConcepts="arch:markAdapterLayer,arch:markServiceLayer,arch:markDomainLayer,arch:markDomains,arch:markServices,arch:markAdapters",includesConstraints="arch:detectIllegalLayerDependencies,arch:detectIllegalDomainDependencies,arch:detectIllegalAdapterDependencies"]
 == Structure
 
-[[arch:markAdapterLayer]]
+[[arch:markTopLevelLayer]]
 [source,cypher,role=concept]
-.Label the layer for the adapters with the label `Adapters`, `ToplevelLayer` and `HexArch`
+.Label the top level packages with the label `ToplevelLayer` and `HexArch`
 ----
 MATCH (package:Java:Package)
-WHERE package.fqn =~ 'corp\\.fantastic\\.[a-z][a-z0-9]*\\.adapters'
-SET package:Adapters:HexArch:ToplevelLayer
+WHERE
+  package.fqn =~ 'corp\\.fantastic\\.[a-z][a-z0-9]*\\.[a-z][a-z0-9]*'
+AND
+  package.name <> "configurations"
+SET package:HexArch:ToplevelLayer
+RETURN package
+----
+
+[[arch:markAdapterLayer]]
+[source,cypher,role=concept,requiresConcepts="arch:markTopLevelLayer"]
+.Label the layer for the adapters with the label `Adapters`
+----
+MATCH (package:Java:Package:ToplevelLayer)
+WHERE package.name ='adapters'
+SET package:Adapters
 RETURN package
 ----
 
 [[arch:markAdapters]]
 [source,cypher,role=concept,requiresConcepts="arch:markAdapterLayer"]
-.Labels each single adapter with the label `Adapter` and `HexArch`
+.Labels each single adapter with the label `Adapter`
 ----
 MATCH (adapterLayer:Adapters:HexArch)-[:CONTAINS]->(adapter:Package:Java)
 WHERE adapter.name <> "common"
-SET adapter:HexArch:Adapter
+SET adapter:Adapter
 return adapter
 ----
 
-
 [[arch:markServiceLayer]]
-[source,cypher,role=concept]
-.Label  the layer for the services with the label `Services`, `ToplevelLayer` and `HexArch`
+[source,cypher,role=concept,requiresConcepts="arch:markTopLevelLayer"]
+.Label  the layer for the services with the label `Services`
 ----
-MATCH (package:Java:Package)
-WHERE package.fqn =~ 'corp\\.fantastic\\.[a-z][a-z0-9]*\\.services'
-SET package:Services:HexArch:ToplevelLayer
+MATCH (package:Java:Package:ToplevelLayer)
+WHERE package.name = 'services'
+SET package:Services
 RETURN package
 ----
 
 [[arch:markServices]]
 [source,cypher,role=concept,requiresConcepts="arch:markServiceLayer"]
-.Labels each single service with the label `Service` and `HexArch`
+.Labels each single service with the label `Service`
 ----
 MATCH (serviceLayer:Services:HexArch)-[:CONTAINS]->(service:Package:Java)
 WHERE service.name <> "common"
-SET service:HexArch:Service
+SET service:Service
 return service
 ----
 
 [[arch:markDomainLayer]]
-[source,cypher,role=concept]
-.Label the layer for the adapters with the label `Domains`, `ToplevelLayer` and `HexArch`
+[source,cypher,role=concept,requiresConcepts="arch:markTopLevelLayer"]
+.Label the layer for the adapters with the label `Domains`
 ----
-MATCH (package:Java:Package)
-WHERE package.fqn =~ 'corp\\.fantastic\\.[a-z][a-z0-9]*\\.domains'
-SET package:Domains:HexArch:ToplevelLayer
+MATCH (package:Java:Package:ToplevelLayer)
+WHERE package.name = 'domains'
+SET package:Domains
 RETURN package
 ----
 
@@ -76,6 +88,15 @@ SET domain:HexArch:Domain
 return domain
 ----
 
+[[arch:markCommon]]
+[source,cypher,role=concept,requiresConcepts="arch:markTopLevelLayer"]
+.Labels each single common package inside each `ToplevelLayer` with the label `Common`
+----
+MATCH (:ToplevelLayer)-[:CONTAINS*]->(c:Package)
+WHERE c.name = "common"
+SET c:HexArch:Common
+RETURN c
+----
 
 [[arch:markAllowedDependencies]]
 [source,cypher,role=concept,requiresConcepts="arch:markDomainLayer,arch:markAdapterLayer,arch:markServiceLayer"]
@@ -89,8 +110,6 @@ MERGE
   (adapterLayer)-[:IS_ALLOWED_TO_USE]->(serviceLayer)
 MERGE
   (serviceLayer)-[:IS_ALLOWED_TO_USE]->(domainLayer)
-MERGE
-  (domainLayer)-[:IS_ALLOWED_TO_USE]->(adapterLayer)
 RETURN
   count(*) as Count
 ----
@@ -104,7 +123,7 @@ MATCH
   (l2:HexArch:ToplevelLayer)-[:CONTAINS*]->(t2:Type),
   (t1)-[:DEPENDS_ON]->(t2)
 WHERE
-  l1 <> l2 AND t1 <> t2
+  l1 <> l2
 WITH
   l1, l2, count(*) as weight
 MERGE
@@ -145,10 +164,6 @@ WHERE
     d1 <> d2
 WITH
     d1, d2, (count(*) - 2) AS weight, collect(distinct t2) AS violations
-MERGE
-    (d1)-[d:DEPENDS_ON]->(d2)
-SET
-    d.weight = weight
 RETURN
     d1 AS Domain, d2 AS DomainDependeny, weight AS DependencyWeight,
     violations AS InvalidTypeDependencies
@@ -167,13 +182,17 @@ WHERE
     d1 <> d2
 WITH
     d1, d2, (count(*) - 2) AS weight, collect(distinct t2) AS violations
-MERGE
-    (d1)-[d:DEPENDS_ON]->(d2)
-SET
-    d.weight = weight
 RETURN
     d1 AS Adapter, d2 AS AdapterDependeny, weight AS DependencyWeight,
     violations AS InvalidTypeDependencies
 ----
 
+[[arch:detectIllegalCommonDependencies]]
+[source,cypher,role=constraint,requiresConcepts="arch:markCommon"]
+`Common` package should only depend on types contained in `Common` package.
+The dependency needs to be included in the same or inner layer (checked via "arch:detectIllegalLayerDependencies" constraint)
+----
+// TODO
+----
 
+// TODO Constraint Adapters exclude common package reported as violation if in different Adapter package
