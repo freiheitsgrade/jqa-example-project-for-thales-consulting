@@ -12,7 +12,7 @@ This section describes that default rules that are executed during each build.
 - <<structure:Default>>
 
 [[structure:Default]]
-[role=group,includesConcepts="arch:markAdapterLayer,arch:markServiceLayer,arch:markDomainLayer,arch:markDomains,arch:markServices,arch:markAdapters",includesConstraints="arch:detectIllegalLayerDependencies,arch:detectIllegalDomainDependencies,arch:detectIllegalAdapterDependencies"]
+[role=group,includesConcepts="arch:markAdapterLayer,arch:markServiceLayer,arch:markDomainLayer,arch:markDomains,arch:markServices,arch:markAdapters",includesConstraints="arch:detectIllegalLayerDependencies,arch:detectIllegalDomainDependencies,arch:detectIllegalAdapterDependencies,arch:detectIllegalCommonDependencies"]
 == Structure
 
 [[arch:markTopLevelLayer]]
@@ -189,10 +189,16 @@ RETURN
 
 [[arch:detectIllegalCommonDependencies]]
 [source,cypher,role=constraint,requiresConcepts="arch:markCommon"]
-`Common` package should only depend on types contained in `Common` package.
-The dependency needs to be included in the same or inner layer (checked via "arch:detectIllegalLayerDependencies" constraint)
+.Find all not allowed dependencies for types contained in a `Common` package. They should not depend on types contained in packages other than `Common`, or outside same layer (latter checked via "arch:detectIllegalLayerDependencies" constraint)
 ----
-// TODO
+MATCH 
+  (c1:Common)-[:CONTAINS*]->(t1:Type)-[:DEPENDS_ON]->(t2:Type)
+WHERE 
+  (:ToplevelLayer)-[:CONTAINS*]->(t2)
+AND NOT
+  (:Common)-[:CONTAINS*]->(t2)
+RETURN
+  distinct(t1.fqn) as Type, t2.fqn as InvalidTypeDependency
 ----
 
 // TODO Constraint Adapters exclude common package reported as violation if in different Adapter package
