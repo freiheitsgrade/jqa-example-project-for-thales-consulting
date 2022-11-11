@@ -7,7 +7,6 @@
     <rules>
 
         <resource>index.adoc</resource>
-        <!--resource>structure.adoc</resource-->
     </rules>
 </jqassistant-plugin>
 

@@ -4,6 +4,7 @@
 [[default]]
 [role=group,includesGroups=,includesGroups="structure:Default"]
 
+include::/structure.adoc[]
 
 == Default Rules
 
