@@ -1,6 +1,5 @@
 [[openapi:Operations]]
 [role=group,includesConcepts="openapi:*"]
-
 == OpenAPI related Rules
 
 // Unfortunately we can use for the following concepts not the
@@ -22,7 +21,6 @@ WHERE operation.name = 'get'
 SET path:Http:Get
 return path.name, operation.name
 ----
-
 
 [[openapi:markPutOperations]]
 [source,cypher,role=concept]
