@@ -1,0 +1,69 @@
+[INFO] Scanning for projects...
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for corp.fantastic.project:parent:jar:0.1.0-SNAPSHOT
+[WARNING] 'build.plugins.plugin.(groupId:artifactId)' must be unique but found duplicate declaration of plugin org.apache.maven.plugins:maven-compiler-plugin @ line 45, column 21
+[WARNING] 
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING] 
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING] 
+[INFO] 
+[INFO] -------------------< corp.fantastic.project:parent >--------------------
+[INFO] Building parent 0.1.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.2.0:clean (default-clean) @ parent ---
+[INFO] Deleting /Users/plx/code/thales/jqa-example-project-for-thales-consulting/example-project/target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.2.0:resources (default-resources) @ parent ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] Copying 0 resource
+[INFO] Copying 1 resource
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.10.1:compile (default-compile) @ parent ---
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 45 source files to /Users/plx/code/thales/jqa-example-project-for-thales-consulting/example-project/target/classes
+[INFO] 
+[INFO] --- maven-resources-plugin:3.2.0:testResources (default-testResources) @ parent ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] skip non existing resourceDirectory /Users/plx/code/thales/jqa-example-project-for-thales-consulting/example-project/src/test/resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.10.1:testCompile (default-testCompile) @ parent ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:2.22.2:test (default-test) @ parent ---
+[INFO] No tests to run.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.1.2:jar (default-jar) @ parent ---
+[INFO] Building jar: /Users/plx/code/thales/jqa-example-project-for-thales-consulting/example-project/target/parent-0.1.0-SNAPSHOT.jar
+[INFO] 
+[INFO] --- jqassistant-maven-plugin:1.12.0:scan (default) @ parent ---
+[INFO] Scanning for jQAssistant plugins...
+[INFO] Loaded plugin 'Shared Rules' with id 'shared_rules'
+[INFO] Loaded plugin 'jQAssistant Core Report Plugin' with id 'jqa.core.report.plugin'
+[INFO] Loaded plugin 'jQAssistant Core Analysis Plugin' with id 'jqa.core.analysis.plugin'
+[INFO] Loaded plugin 'jQAssistant AsciiDoc Report Plugin' with id 'jqa.plugin.asciidocreport'
+[INFO] Loaded plugin 'jQAssistant CDI Plugin' with id 'jqa.plugin.cdi'
+[INFO] Loaded plugin 'jQAssistant Common Plugin' with id 'jqa.plugin.common'
+[INFO] Loaded plugin 'jQAssistant EJB 3 Plugin' with id 'jqa.plugin.ejb'
+[INFO] Loaded plugin 'jQAssistant GraphML Plugin' with id 'jqa.plugin.graphml'
+[INFO] Loaded plugin 'jQAssistant GraphQL Plugin' with id 'jqa.plugin.graphql'
+[INFO] Loaded plugin 'jQAssistant Java Plugin' with id 'jqa.plugin.java'
+[INFO] Loaded plugin 'jQAssistant Java EE 6 Plugin' with id 'jqa.plugin.javaee'
+[INFO] Loaded plugin 'jQAssistant JAX-RS Plugin' with id 'jqa.plugin.jaxrs'
+[INFO] Loaded plugin 'jQAssistant JPA 2 Plugin' with id 'jqa.plugin.jpa2'
+[INFO] Loaded plugin 'jQAssistant JUnit Plugin' with id 'jqa.plugin.junit'
+[INFO] Loaded plugin 'jQAssistant JSON Plugin' with id 'jqa.plugin.json'
+[INFO] Loaded plugin 'jQAssistant Maven 2 Repository Plugin' with id 'jqa.plugin.m2repo'
+[INFO] Loaded plugin 'jQAssistant Maven 3 Plugin' with id 'jqa.plugin.maven3'
+[INFO] Loaded plugin 'jQAssistant OSGi Plugin' with id 'jqa.plugin.osgi'
+[INFO] Loaded plugin 'jQAssistant RDBMS Plugin' with id 'jqa.plugin.rdbms'
+[INFO] Loaded plugin 'jQAssistant Spring Plugin' with id 'jqa.plugin.spring'
+[INFO] Loaded plugin 'jQAssistant TestNG Plugin' with id 'jqa.plugin.testng'
+[INFO] Loaded plugin 'jQAssistant Tycho Plugin' with id 'jqa.plugin.tycho'
+[INFO] Loaded plugin 'jQAssistant XML Plugin' with id 'jqa.plugin.xml'
+[INFO] Loaded plugin 'jQAssistant YAML Plugin' with id 'jqa.plugin.yaml'
+[INFO] Loaded plugin 'jQAssistant YAML 2 Plugin' with id 'jqa.plugin.yaml2'
+[INFO] Connecting to store at 'file:/Users/plx/code/thales/jqa-example-project-for-thales-consulting/example-project/target/jqassistant/store/'
