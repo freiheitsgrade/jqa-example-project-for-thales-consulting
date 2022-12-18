@@ -2,7 +2,7 @@
 = Architecture Linting Report
 
 [[default]]
-[role=group,includesGroups=,includesGroups="structure:Default"]
+[role=group,includesGroups=,includesGroups="structure:Default,openapi:Operations"]
 
 include::/structure.adoc[]
 
@@ -11,6 +11,7 @@ include::/structure.adoc[]
 This section describes that default rules that are executed during each build.
 
 - <<structure:Default>>
+- <<openapi:Operations>>
 
 [[structure:Default]]
 [role=group,includesConcepts="arch:markAdapterLayer,arch:markServiceLayer,arch:markDomainLayer,arch:markDomains,arch:markServices,arch:markAdapters",includesConstraints="arch:detectIllegalLayerDependencies,arch:detectIllegalDomainDependencies,arch:detectIllegalAdapterDependencies,arch:detectIllegalCommonDependencies"]
@@ -203,3 +204,6 @@ RETURN
 ----
 
 // TODO Constraint Adapters exclude common package reported as violation if in different Adapter package
+
+
+include::/openapi.adoc[]

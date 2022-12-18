@@ -7,6 +7,7 @@
     <rules>
 
         <resource>index.adoc</resource>
+        <resource>openapi.adoc</resource>
     </rules>
 </jqassistant-plugin>
 

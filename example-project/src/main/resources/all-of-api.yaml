@@ -1,0 +1,47 @@
+openapi: 3.1.0
+info:
+  title: allOf Example
+  version: 0.2.3
+
+
+paths:
+  /allofresources:
+    put:
+      operationId: updateResource
+      requestBody:
+        description: Update an existent pet in the store
+        content:
+          application/json:
+            schema:
+              # Zur Bedeutung von allOf siehe die OpenAPI Spezifikation unter
+              # Kapitel 4.8.24 Schema Object
+              # https://spec.openapis.org/oas/v3.1.0#schema-object
+
+              # Ein Objekt muss alle Eigenschaften aller Schemas haben
+              allOf:
+                - type: object
+                  properties:
+                    firstname:
+                      type: string
+                - type: object
+                  properties:
+                    lastname:
+                      type: string
+
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      firstname:
+                        type: string
+                      secondname:
+                        type: string
+                  - type: object
+                    properties:
+                      lastname:
+                        type: string
