@@ -1,6 +1,7 @@
 [[openapi:Operations]]
-[role=group,includesConcepts="openapi:*"]
+[role=group,includesConcepts="openapi:*",includesConstraints="openapi:*"]
 == OpenAPI related Rules
+
 
 // Unfortunately we can use for the following concepts not the
 // UNWIND clause of Cypher. Therefor we have to write on concept for
@@ -62,4 +63,26 @@ MATCH (doc:Yaml:Document)-[:HAS_MAP]->(:Map:Yaml)
 WHERE operation.name = 'delete'
 SET path:Http:Delete
 return path.name, operation.name
+----
+
+
+[[openapi:detectMissingPutImplementations]]
+[source,cypher,role=constraint,requiresConcepts="openapi:markPutOperations"]
+.All specified but not implemented Put operations
+----
+MATCH (operation:Http:Put)
+WITH  operation
+
+MATCH (method:Method:Java)
+      -[:ANNOTATED_BY]->(annotation:Java:Annotation)
+      -[:OF_TYPE]->(type:Java {fqn:'org.springframework.web.bind.annotation.PutMapping'}),
+      (annotation)-[:HAS]->(attribute:Value {name:'name'})
+
+WHERE attribute.value = operation.name
+WITH collect(operation.name) as paths
+
+MATCH (ops:Http:Put)
+WHERE NOT ops.name IN paths
+
+RETURN ops.name AS path, 'put' AS operation
 ----
