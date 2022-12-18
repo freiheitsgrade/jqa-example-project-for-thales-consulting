@@ -1,0 +1,104 @@
+  match (operation:Http:Put)
+    with operation
+    match
+    
+    (method:Method:Java)
+    -[:ANNOTATED_BY]->(annotation:Java:Annotation)
+    -[:OF_TYPE]->(type:Java {fqn:'org.springframework.web.bind.annotation.PutMapping'}),
+    (annotation)-[:HAS]->(attribute:Value {name:'name'})
+    
+    where attribute.value = operation.name
+    with collect(operation.name) as paths
+    
+    match (ops:Http:Put)
+    where not ops.name in paths
+    
+    return ops
+
+
+----
+
+
+  match (operation:Http:Put)
+    with operation
+    match
+    
+    (method:Method:Java)
+    -[:ANNOTATED_BY]->(annotation:Java:Annotation)
+    -[:OF_TYPE]->(type:Java {fqn:'org.springframework.web.bind.annotation.PutMapping'}),
+    (annotation)-[:HAS]->(attribute:Value {name:'name'})
+    
+    where attribute.value = operation.name
+    return operation.name
+
+
+-----
+
+MATCH (doc:Yaml:Document)-[:CONTAINS_KEY]->(openapiversion:Yaml:Key {name: 'openapi'}),
+  (doc)-[:CONTAINS_KEY]->(paths:Yaml:Key)
+  with (paths)
+  match (paths)-[:CONTAINS_KEY]->(path)
+  RETURN *
+
+
+----
+
+
+
+  MATCH (doc:Yaml:Document)-[:HAS_MAP]->(:Map:Yaml)
+-[:HAS_KEY]->(paths:Key:Yaml {name: 'paths'})
+  -[:HAS_VALUE]->(:Map:Yaml:Value)
+  -[:HAS_KEY]->(path:Yaml:Key)
+  
+  
+  RETURN path.name
+
+
+---
+
+
+
+  MATCH (doc:Yaml:Document)-[:HAS_MAP]->(:Map:Yaml)
+-[:HAS_KEY]->(paths:Key:Yaml {name: 'paths'})
+  -[:HAS_VALUE]->(:Map:Yaml:Value)
+  -[:HAS_KEY]->(path:Yaml:Key)
+  
+  
+  with path
+  unwind ['get', 'put'] as httpVerb
+  match (path)-[:HAS_VALUE]->(es_:Map:Yaml)-[:HAS_KEY]->(operation)
+  where operation.name = httpVerb
+  SET path:Http:Put
+  //return path.name, operation.name, httpVerb
+  RETURN path
+
+
+---
+
+match (operation:Http:Put)
+with operation
+match
+
+(element:Method:Java)
+-[:ANNOTATED_BY]->(annotation:Java:Annotation)
+-[:OF_TYPE]->(type:Java {fqn:'org.springframework.web.bind.annotation.PutMapping'}),
+(annotation)-[:HAS]->(attribute:Value {name:'name'})
+
+where attribute.value = operation.name
+return element, attribute, operation
+
+
+----
+
+
+match (operation:Http:Put)
+with operation
+match
+
+(method:Method:Java)
+-[:ANNOTATED_BY]->(annotation:Java:Annotation)
+-[:OF_TYPE]->(type:Java {fqn:'org.springframework.web.bind.annotation.PutMapping'}),
+(annotation)-[:HAS]->(attribute:Value {name:'name'})
+
+where attribute.value = operation.name
+return method

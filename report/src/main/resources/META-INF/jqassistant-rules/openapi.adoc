@@ -1,0 +1,279 @@
+[[openapi:Operations]]
+[role=group,includesConcepts="openapi:*",includesConstraints="openapi:*"]
+== OpenAPI related Rules
+
+
+// Unfortunately we can use for the following concepts not the
+// UNWIND clause of Cypher. Therefor we have to write on concept for
+// each HTTP method we would like analyse.
+// See https://github.com/neo4j/neo4j/issues/12127
+// Oliver B. Fischer // 2022-12-18
+
+[[openapi:markGetOperations]]
+[source,cypher,role=concept]
+.Labels all paths with a specified HTTP Get operation with `:Http:Get`
+----
+MATCH (doc:Yaml:Document)-[:HAS_MAP]->(:Map:Yaml)
+      -[:HAS_KEY]->(paths:Key:Yaml {name: 'paths'})
+      -[:HAS_VALUE]->(:Map:Yaml:Value)
+      -[:HAS_KEY]->(path:Yaml:Key)
+      -[:HAS_VALUE]->(es_:Map:Yaml)-[:HAS_KEY]->(operation)
+WHERE operation.name = 'get'
+SET path:Http:Get:HttpVerb
+return path.name, operation.name
+----
+
+[[openapi:markPutOperations]]
+[source,cypher,role=concept]
+.Labels all paths with a specified HTTP Put operation with `:Http:Put`
+----
+MATCH (doc:Yaml:Document)-[:HAS_MAP]->(:Map:Yaml)
+      -[:HAS_KEY]->(paths:Key:Yaml {name: 'paths'})
+      -[:HAS_VALUE]->(:Map:Yaml:Value)
+      -[:HAS_KEY]->(path:Yaml:Key)
+      -[:HAS_VALUE]->(es_:Map:Yaml)-[:HAS_KEY]->(operation)
+WHERE operation.name = 'put'
+SET path:Http:Put:HttpVerb
+return path.name, operation.name
+----
+
+[[openapi:markPatchOperations]]
+[source,cypher,role=concept]
+.Labels all paths with a specified HTTP Patch operation with `:Http:Patch`
+----
+MATCH (doc:Yaml:Document)-[:HAS_MAP]->(:Map:Yaml)
+      -[:HAS_KEY]->(paths:Key:Yaml {name: 'paths'})
+      -[:HAS_VALUE]->(:Map:Yaml:Value)
+      -[:HAS_KEY]->(path:Yaml:Key)
+      -[:HAS_VALUE]->(es_:Map:Yaml)-[:HAS_KEY]->(operation)
+WHERE operation.name = 'patch'
+SET path:Http:Patch:HttpVerb
+return path.name, operation.name
+----
+
+[[openapi:markDeleteOperations]]
+[source,cypher,role=concept]
+.Labels all paths with a specified HTTP Patch operation with `:Http:Delete`
+----
+MATCH (doc:Yaml:Document)-[:HAS_MAP]->(:Map:Yaml)
+      -[:HAS_KEY]->(paths:Key:Yaml {name: 'paths'})
+      -[:HAS_VALUE]->(:Map:Yaml:Value)
+      -[:HAS_KEY]->(path:Yaml:Key)
+      -[:HAS_VALUE]->(es_:Map:Yaml)-[:HAS_KEY]->(operation)
+WHERE operation.name = 'delete'
+SET path:Http:Delete:HttpVerb
+return path.name, operation.name
+----
+
+
+[[openapi:detectMissingPutImplementations]]
+[source,cypher,role=constraint,requiresConcepts="openapi:markPutOperations"]
+.All specified but not implemented Put operations
+----
+MATCH (operation:Http:Put)
+WITH  operation
+
+MATCH (method:Method:Java)
+      -[:ANNOTATED_BY]->(annotation:Java:Annotation)
+      -[:OF_TYPE]->(type:Java {fqn:'org.springframework.web.bind.annotation.PutMapping'}),
+      (annotation)-[:HAS]->(attribute:Value {name:'name'})
+
+WHERE attribute.value = operation.name
+WITH collect(operation.name) as paths
+
+MATCH (ops:Http:Put)
+WHERE NOT ops.name IN paths
+
+RETURN ops.name AS path, 'put' AS operation
+----
+
+=== Faulty implementations of responses with `allOf` in schema definition
+
+This constrains looks of Java implementations of resources, there the returned Java type must match exactly all the specified schemas.
+In OpenAPI this is denoted by the `allOf` keyword.
+
+
+==== Result colum description
+
+`restResourcePath`::
+  The path of the REST resource with the faulty implementation of the response body
+`declaredSchemaProperties`::
+  All properties defined in the OpenAPI schema for the response body
+`javaReturnType`::
+  Java type returned from the Java method implementing the HTTP operation for the given resource
+`declaredBeanProperties`::
+  Bean properties defined of the Java type
+`schemaPropertiesMissingInBean`::
+  All fields, defined in the Open API schema definition, but not found in the Java type
+`beanPropertiesMissingInSchema`::
+  All bean properties defined in the Java type, but not in the OpenAPI schema definition
+
+
+[[openapi:detectMissingWrongAllOfImplementations]]
+[source,cypher,role=constraint,requiresConcepts="openapi:markPutOperations"]
+.Faulty implementations of `allOf`
+----
+// This match clause searches for all properties for all schemas that
+// an object must satisfy to be valid according to the schema.
+
+
+MATCH (operation:Http:HttpVerb) // Search for an operation in the OAS.
+                                // These were previously provided with the label HttpVerb by means of a concept.
+    -[:HAS_VALUE]->(:Map:Yaml:Value)-[:HAS_KEY]->(httpVerb:Yaml:Key:Simple)
+    -[:HAS_VALUE]->(:Map:Value:Yaml)
+
+    -[:HAS_KEY]->(responseBody:Yaml {name: 'responses'}) // Find the response definition
+
+    -[*]->(schema {name: 'schema'}) // Now find the scheme for the response
+
+    -[:HAS_VALUE]->()
+
+    -[:HAS_KEY]->(allOfKeyword {name: 'allOf'}) // For this rule we are only interested in schemes with allOf
+
+    -[*]->(properties:Yaml {name: 'properties'}) // The next thing we are looking for are all the property definitions
+    -[:HAS_VALUE]->(propertiesMap:Yaml:Map)
+
+    -[:HAS_KEY]->(propertyName:Yaml)             // Over here we collect all Propery names
+
+WITH collect(propertyName.name) AS schemaProperties,  // Now we form the result set with which we can
+     operation.name AS path                           // Enter the next match clause.
+                                                      // What is the return set? A list of property names
+                                                      // and the resource path for the HTTP operation.
+
+// Now we look for the Java method that was annotated for this path with the annotation
+// PutMapping annotation
+MATCH (method:Method:Java)
+    -[:ANNOTATED_BY]->(annotation:Java:Annotation)
+    -[:OF_TYPE]->(type:Java {fqn:'org.springframework.web.bind.annotation.PutMapping'}),
+
+   (annotation)-[:HAS]->(attribute:Value {name:'name', value: path}),
+
+   // Starting from the found method (variable method), we search for the return type (variable rc).
+   // and now search for the getters (variable getter). That we only find the getters is ensured by the
+   // the WHERE clause
+   (method)-[:RETURNS]->(rc:Java:Type)-[:DECLARES]->(getter)
+
+WHERE getter.name STARTS WITH 'get'
+
+// Now pure string processing, where we remove the prefix 'get' and
+// thus form the names of the properties. Idea: From the getters and setters we can infer // the properties of the bean.
+// infer the properties of the bean. And these must or should also be found in the
+// or the schema definition.
+WITH replace(getter.name, 'get', '') AS baseName, schemaProperties, path, rc
+WITH collect(lower(substring(baseName,0,1)) + substring(baseName,1)) AS beanProperties,
+     schemaProperties, path, rc
+
+// Before we enter the last match clause we take the following with us
+// - beanProperties: The names of the properties of the Java bean.
+// - schemaProperties: The names of all properties that must be present for allOf.
+// - path: The resource path from the OAS specification
+// - rc: The class of the return type of the implementing Java method.
+WITH beanProperties, schemaProperties, path, rc
+
+// The result set is composed as follows
+
+RETURN
+       // The resource path and the required schema properties
+       path AS restResourcePath,
+       schemaProperties as declaredSchemaProperties,
+
+       // The Java type and its beanproperties
+       rc.fqn AS javaReturnType,
+       beanProperties AS declaredBeanProperties,
+
+       // Using this filter, we make a cut and search for the schema properties that are not
+       // are in the list of beanproperties
+       filter(schemaProperty IN schemaProperties WHERE NOT schemaProperty IN beanProperties) AS schemaPropertiesMissingInBean,
+
+       // This filter looks for the opposite: all beanproperties found that are not in the
+       // schema properties
+       filter(beanProperty in beanProperties where not beanProperty in schemaProperties) AS beanPropertiesMissingInSchema
+----
+
+
+=== Faulty implementations of responses with `oneOf` in schema definition
+
+
+This constrains looks of Java implementations of resources, there the returned Java type must match exactly one the specified schemas.
+In OpenAPI this is denoted by the `oneOf` keyword.
+
+
+==== Result colum description
+
+`restResourcePath`::
+The path of the REST resource with the faulty implementation of the response body
+`declaredSchemaProperties`::
+All properties defined in the OpenAPI schema for the response body
+`javaReturnType`::
+Java type returned from the Java method implementing the HTTP operation for the given resource
+`declaredBeanProperties`::
+Bean properties defined of the Java type
+`schemaPropertiesMissingInBean`::
+All fields, defined in the Open API schema definition, but not found in the Java type
+`beanPropertiesMissingInSchema`::
+All bean properties defined in the Java type, but not in the OpenAPI schema definition
+
+
+[[openapi:detectMissingWrongOneeOfImplementations]]
+[source,cypher,role=constraint,requiresConcepts="openapi:markPutOperations"]
+.Faulty implementations of `oneOf`
+----
+
+MATCH (operation:Http:HttpVerb)      // Searching for an operation in the OAS.
+                                     // These were previously provided with the label HttpVerb by means of a concept.
+    -[:HAS_VALUE]->(:Map:Yaml:Value)-[:HAS_KEY]->(httpVerb:Yaml:Key:Simple)
+
+    -[:HAS_VALUE]->(:Map:Value:Yaml)
+
+    -[:HAS_KEY]->(responseBody:Yaml {name: 'responses'})   // Find the response definition
+
+    -[*]->(schema {name: 'schema'}) // Finde jetzt das Schema für die Response
+
+    -[:HAS_VALUE]->()
+
+    -[:HAS_KEY]->(oneOfKeyword {name: 'oneOf'}) // For this rule we are only interested in schemes with allOf
+
+    -[*]->(properties:Yaml {name: 'properties'})  // The next thing we are looking for are all the property definitions
+    -[:HAS_VALUE]->(typespec:Map:Yaml)
+
+    -[:HAS_KEY]->(propertyName:Yaml) // Here we collect all Propery names
+
+// This WITH clause is different from the one for the rule for allOf,
+// By including the typespec variable in the WITH clause, we make
+// typespec acts like a grouping. Only then is it possible to group the individual schemas
+// to group/separate the individual schemas from oneOf.
+WITH  typespec,
+      operation.name AS path,
+      collect(propertyName.name) AS schemaProperties
+
+// Now we look for the Java method that was annotated for this path with the annotation
+// PutMapping annotation
+MATCH (method:Method:Java)
+    -[:ANNOTATED_BY]->(annotation:Java:Annotation)
+    -[:OF_TYPE]->(type:Java {fqn:'org.springframework.web.bind.annotation.PutMapping'}),
+
+    (annotation)-[:HAS]->(attribute:Value {name:'name', value: path}),
+
+    // Starting from the found method (variable method), we search for the return type (variable rc)
+    // and now search for the getters (variable getter). That we only find the getters is ensured by the
+    // the WHERE clause
+    (method)-[:RETURNS]->(rc:Java:Type)-[:DECLARES]->(getter:Java:Method)
+
+WHERE getter.name STARTS WITH 'get'
+
+// Now pure string processing, where we remove the prefix 'get' and form
+// thus form the names of the properties. Idea: From the getters and setters we can infer // the properties of the bean.
+// the properties of the bean. And these must or should also be found in the
+// the schema definition respectively
+WITH replace(getter.name, 'get', '') AS baseName, schemaProperties, path, rc
+WITH collect(lower(substring(baseName,0,1)) + substring(baseName,1)) AS beanProperties, schemaProperties, path, rc
+
+RETURN path AS restResourcePath,
+       schemaProperties AS declaredSchemaProperties,
+       rc.fqn AS javaReturnType,
+       beanProperties AS declaredBeanProperties,
+       filter(schemaProperty IN schemaProperties WHERE NOT schemaProperty IN beanProperties) AS schemaPropertiesMissingInBean,
+       filter(beanProperty IN beanProperties WHERE NOT beanProperty IN schemaProperties) AS beanPropertiesMissingInSchema
+----
+
+

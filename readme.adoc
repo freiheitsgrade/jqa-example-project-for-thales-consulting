@@ -16,7 +16,21 @@ The example below shows how to build the example project and to generate the rep
 [source,shell]
 ----
 $ cd jqa-example-project-for-thales-consulting/example-project
-$ mvn -f ../report && mvn
+$ mvn -f report/ clean install
+$ mvn -f example-project/ clean install
 ----
 
 The generated report can be found in the directory `target/jqassistant/report/asciidoc/`.
+
+== How to run the Neo4J Browser
+
+To run the Neo4J Browser, you must execute the following command.
+
+[source,shell]
+----
+$ cd example-project
+$ mvn \
+    -Djqassistant.store.directory=target/jqassistant/store com.buschmais.jqassistant:jqassistant-maven-plugin:$(mvn -q -DforceStdout -Dexpression=jqassistant-plugin.version help:evaluate):server
+----
+
+During the startup of the server, the address of the server is logged to the console.
