@@ -1,0 +1,67 @@
+[[openapi:Operations]]
+[role=group,includesConcepts="openapi:*"]
+
+== OpenAPI related Rules
+
+// Unfortunately we can use for the following concepts not the
+// UNWIND clause of Cypher. Therefor we have to write on concept for
+// each HTTP method we would like analyse.
+// See https://github.com/neo4j/neo4j/issues/12127
+// Oliver B. Fischer // 2022-12-18
+
+[[openapi:markGetOperations]]
+[source,cypher,role=concept]
+.Labels all paths with a specified HTTP Get operation with `:Http:Get`
+----
+MATCH (doc:Yaml:Document)-[:HAS_MAP]->(:Map:Yaml)
+      -[:HAS_KEY]->(paths:Key:Yaml {name: 'paths'})
+      -[:HAS_VALUE]->(:Map:Yaml:Value)
+      -[:HAS_KEY]->(path:Yaml:Key)
+      -[:HAS_VALUE]->(es_:Map:Yaml)-[:HAS_KEY]->(operation)
+WHERE operation.name = 'get'
+SET path:Http:Get
+return path.name, operation.name
+----
+
+
+[[openapi:markPutOperations]]
+[source,cypher,role=concept]
+.Labels all paths with a specified HTTP Put operation with `:Http:Put`
+----
+MATCH (doc:Yaml:Document)-[:HAS_MAP]->(:Map:Yaml)
+      -[:HAS_KEY]->(paths:Key:Yaml {name: 'paths'})
+      -[:HAS_VALUE]->(:Map:Yaml:Value)
+      -[:HAS_KEY]->(path:Yaml:Key)
+      -[:HAS_VALUE]->(es_:Map:Yaml)-[:HAS_KEY]->(operation)
+WHERE operation.name = 'put'
+SET path:Http:Put
+return path.name, operation.name
+----
+
+[[openapi:markPatchOperations]]
+[source,cypher,role=concept]
+.Labels all paths with a specified HTTP Patch operation with `:Http:Patch`
+----
+MATCH (doc:Yaml:Document)-[:HAS_MAP]->(:Map:Yaml)
+      -[:HAS_KEY]->(paths:Key:Yaml {name: 'paths'})
+      -[:HAS_VALUE]->(:Map:Yaml:Value)
+      -[:HAS_KEY]->(path:Yaml:Key)
+      -[:HAS_VALUE]->(es_:Map:Yaml)-[:HAS_KEY]->(operation)
+WHERE operation.name = 'patch'
+SET path:Http:Patch
+return path.name, operation.name
+----
+
+[[openapi:markDeleteOperations]]
+[source,cypher,role=concept]
+.Labels all paths with a specified HTTP Patch operation with `:Http:Delete`
+----
+MATCH (doc:Yaml:Document)-[:HAS_MAP]->(:Map:Yaml)
+      -[:HAS_KEY]->(paths:Key:Yaml {name: 'paths'})
+      -[:HAS_VALUE]->(:Map:Yaml:Value)
+      -[:HAS_KEY]->(path:Yaml:Key)
+      -[:HAS_VALUE]->(es_:Map:Yaml)-[:HAS_KEY]->(operation)
+WHERE operation.name = 'delete'
+SET path:Http:Delete
+return path.name, operation.name
+----
